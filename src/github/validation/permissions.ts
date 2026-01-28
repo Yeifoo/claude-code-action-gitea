@@ -49,6 +49,16 @@ export async function checkWritePermissions(
       return true;
     }
 
+    // For Gitea, check if bot usernames override is set
+    const overrideBotUsernames = process.env.OVERRIDE_BOT_USERNAMES;
+    if (overrideBotUsernames) {
+      const botUsernames = overrideBotUsernames.split(",").map((u) => u.trim());
+      if (botUsernames.includes(actor) || overrideBotUsernames === "*") {
+        core.info(`Actor is in OVERRIDE_BOT_USERNAMES list: ${actor}`);
+        return true;
+      }
+    }
+
     // Check permissions directly using the permission endpoint
     const response = await octokit.repos.getCollaboratorPermissionLevel({
       owner: repository.owner,
@@ -59,7 +69,7 @@ export async function checkWritePermissions(
     const permissionLevel = response.data.permission;
     core.info(`Permission level retrieved: ${permissionLevel}`);
 
-    if (permissionLevel === "admin" || permissionLevel === "write") {
+    if (permissionLevel === "admin" || permissionLevel === "write" || permissionLevel === "owner") {
       core.info(`Actor has write access: ${permissionLevel}`);
       return true;
     } else {
@@ -68,6 +78,14 @@ export async function checkWritePermissions(
     }
   } catch (error) {
     core.error(`Failed to check permissions: ${error}`);
+    // For Gitea environments, if permission check fails, allow if USE_GITEA_API is set
+    // This is because Gitea's API might not fully support all GitHub API endpoints
+    if (process.env.USE_GITEA_API === "true") {
+      core.warning(
+        ` Permission check failed in Gitea environment. Allowing action to proceed. Error: ${error}`,
+      );
+      return true;
+    }
     throw new Error(`Failed to check permissions for ${actor}: ${error}`);
   }
 }

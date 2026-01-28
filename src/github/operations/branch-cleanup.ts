@@ -1,5 +1,6 @@
 import type { Octokits } from "../api/client";
-import { GITHUB_SERVER_URL } from "../api/config";
+import { GITHUB_SERVER_URL, USE_GITEA_API } from "../api/config";
+import { createBranchUrl } from "./comments/common";
 import { $ } from "bun";
 
 export async function checkAndCommitOrDeleteBranch(
@@ -80,7 +81,9 @@ export async function checkAndCommitOrDeleteBranch(
               );
 
               // Set branch link since we now have commits
-              const branchUrl = `${GITHUB_SERVER_URL}/${owner}/${repo}/tree/${claudeBranch}`;
+              const branchUrl = USE_GITEA_API
+                ? createBranchUrl(owner, repo, claudeBranch)
+                : `${GITHUB_SERVER_URL}/${owner}/${repo}/tree/${claudeBranch}`;
               branchLink = `\n[View branch](${branchUrl})`;
             } else {
               console.log(
@@ -91,7 +94,9 @@ export async function checkAndCommitOrDeleteBranch(
           } catch (gitError) {
             console.error("Error checking/committing changes:", gitError);
             // If we can't check git status, assume the branch might have changes
-            const branchUrl = `${GITHUB_SERVER_URL}/${owner}/${repo}/tree/${claudeBranch}`;
+            const branchUrl = USE_GITEA_API
+              ? createBranchUrl(owner, repo, claudeBranch)
+              : `${GITHUB_SERVER_URL}/${owner}/${repo}/tree/${claudeBranch}`;
             branchLink = `\n[View branch](${branchUrl})`;
           }
         } else {
@@ -102,13 +107,17 @@ export async function checkAndCommitOrDeleteBranch(
         }
       } else {
         // Only add branch link if there are commits
-        const branchUrl = `${GITHUB_SERVER_URL}/${owner}/${repo}/tree/${claudeBranch}`;
+        const branchUrl = USE_GITEA_API
+          ? createBranchUrl(owner, repo, claudeBranch)
+          : `${GITHUB_SERVER_URL}/${owner}/${repo}/tree/${claudeBranch}`;
         branchLink = `\n[View branch](${branchUrl})`;
       }
     } catch (error) {
       console.error("Error comparing commits on Claude branch:", error);
       // If we can't compare but the branch exists remotely, include the branch link
-      const branchUrl = `${GITHUB_SERVER_URL}/${owner}/${repo}/tree/${claudeBranch}`;
+      const branchUrl = USE_GITEA_API
+        ? createBranchUrl(owner, repo, claudeBranch)
+        : `${GITHUB_SERVER_URL}/${owner}/${repo}/tree/${claudeBranch}`;
       branchLink = `\n[View branch](${branchUrl})`;
     }
   }

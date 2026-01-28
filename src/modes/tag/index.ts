@@ -36,6 +36,23 @@ export const tagMode: Mode = {
     if (!isEntityContext(context)) {
       return false;
     }
+    
+    // When track_progress is enabled, automatically trigger for supported PR/issue events
+    if (context.inputs.trackProgress) {
+      const isPR = context.eventName === "pull_request";
+      const isIssue = context.eventName === "issues";
+      const supportedPRActions = ["opened", "synchronize", "synchronized", "ready_for_review", "reopened"];
+      const supportedIssueActions = ["opened", "edited", "labeled", "assigned"];
+      
+      if (isPR && context.eventAction && supportedPRActions.includes(context.eventAction)) {
+        return true;
+      }
+      
+      if (isIssue && context.eventAction && supportedIssueActions.includes(context.eventAction)) {
+        return true;
+      }
+    }
+    
     return checkContainsTrigger(context);
   },
 

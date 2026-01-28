@@ -12,6 +12,22 @@ export async function checkHumanActor(
   octokit: Octokit,
   githubContext: GitHubContext,
 ) {
+  if (process.env.GITEA_BOT_USERNAMES) {
+    if (
+      process.env.GITEA_BOT_USERNAMES.split(",").includes(githubContext.actor)
+    ) {
+      throw new Error(
+        `Workflow initiated by non-human actor: ${githubContext.actor}. Please add bot to GITEA_BOT_USERNAMES`,
+      );
+    }
+    return;
+  }
+
+  // For Gitea environments, skip the user type check if USE_GITEA_API is set
+  if (process.env.USE_GITEA_API === "true") {
+    return;
+  }
+
   // Fetch user information from GitHub API
   const { data: userData } = await octokit.users.getByUsername({
     username: githubContext.actor,

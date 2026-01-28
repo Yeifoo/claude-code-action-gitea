@@ -1,4 +1,5 @@
-import { GITHUB_SERVER_URL } from "../api/config";
+import { GITHUB_SERVER_URL, USE_GITEA_API } from "../api/config";
+import { createBranchUrl } from "./comments/common";
 
 export type ExecutionDetails = {
   total_cost_usd?: number;
@@ -157,10 +158,14 @@ export function updateCommentBody(input: CommentUpdateInput): string {
 
     // If we don't have a URL yet but have a branch name, construct it
     if (!branchUrl && finalBranchName) {
-      // Extract owner/repo from jobUrl
-      const repoMatch = jobUrl.match(/github\.com\/([^\/]+)\/([^\/]+)\//);
+      // Extract owner/repo from jobUrl (works for both GitHub and Gitea URLs)
+      const repoMatch = USE_GITEA_API
+        ? jobUrl.match(/\/([^\/]+)\/([^\/]+)\/(?:actions|tree|src)/)
+        : jobUrl.match(/github\.com\/([^\/]+)\/([^\/]+)\//);
       if (repoMatch) {
-        branchUrl = `${GITHUB_SERVER_URL}/${repoMatch[1]}/${repoMatch[2]}/tree/${finalBranchName}`;
+        branchUrl = USE_GITEA_API
+          ? createBranchUrl(repoMatch[1], repoMatch[2], finalBranchName)
+          : `${GITHUB_SERVER_URL}/${repoMatch[1]}/${repoMatch[2]}/tree/${finalBranchName}`;
       }
     }
 
