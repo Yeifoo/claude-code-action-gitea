@@ -259,6 +259,7 @@ runs:
         bun run ${GITHUB_ACTION_PATH}/base-action/src/index.ts
       env:
         # Base-action inputs
+        INPUT_PROMPT: ""
         CLAUDE_CODE_ACTION: "1"
         INPUT_PROMPT_FILE: ${{ runner.temp }}/claude-prompts/claude-prompt.txt
         INPUT_SETTINGS: ${{ inputs.settings }}
